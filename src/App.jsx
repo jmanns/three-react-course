@@ -1,42 +1,72 @@
-import { useState, useRef } from 'react'
-import { Canvas, useFrame, extend, useThree } from '@react-three/fiber'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-// import * as THREE from 'three'
+import { Suspense } from 'react'
+import { Canvas, useThree, useLoader } from '@react-three/fiber'
+import { Physics } from '@react-three/cannon'
+import * as THREE from 'three'
+
+import Orbit from './components/Orbit'
+
+import Floor from './components/Floor'
+import Bulb from './components/Bulb'
+import ColorPicker from './components/ColorPicker'
+
+import Cars from './components/Cars'
+import CameraControls from './components/CameraControls'
+import CameraButtons from './components/CameraButtons'
 
 import './App.css'
 
-extend({ OrbitControls })
+const Background = (props) => {
+  // const texture = useLoader(THREE.TextureLoader, '/sky.jpg')
+  const texture = useLoader(THREE.TextureLoader, '/autoshop.jpg')
 
-const Orbit = () => {
-  const { camera, gl } = useThree()
-  return <orbitControls args={[camera, gl.domElement]} />
-}
+  const { gl } = useThree()
 
-function Box(props) {
-  const ref = useRef()
-
-  // useFrame((state) => {
-  //   ref.current.rotation.x += 0.01
-  //   ref.current.rotation.y += 0.01
-  // })
-
-  return (
-    <mesh ref={ref} {...props}>
-      <boxGeometry />
-      <meshBasicMaterial color="hotpink" />
-    </mesh>
+  const formatted = new THREE.WebGLCubeRenderTarget(texture.image.height).fromEquirectangularTexture(
+    gl,
+    texture
   )
+
+  return <primitive attach="background" object={formatted.texture} />
 }
 
 function App() {
   return (
     <div style={{ height: '100vh', width: '100vw' }}>
-      <Canvas style={{ background: 'black' }} camera={{ position: [3, 3, 3] }}>
-        <Box position={[4, 4, 0]} />
+      <ColorPicker />
+      <CameraButtons />
+      <Canvas style={{ background: 'black' }} camera={{ position: [7, 7, 7] }} shadows>
+        <CameraControls />
+        {/* <fog attach="fog" args={['white', 1, 10]} /> */}
+
+        <Physics>
+          <Cars />
+          <Floor position={[0, -0.5, 0]} />
+        </Physics>
+
+        {/* <Physics>
+          <Draggable>
+            <Suspense fallback={null}>
+              <Box position={[4, 1, 0]} />
+            </Suspense>
+
+            <Suspense fallback={null}>
+              <Box position={[-4, 1, 0]} />
+            </Suspense>
+          </Draggable>
+
+          <Floor position={[0, -0.5, 0]} />
+        </Physics> */}
+
+        <Suspense fallback={null}>
+          <Background />
+        </Suspense>
+
         <Orbit />
         <axesHelper args={[5]} />
-        {/* <ambientLight />
-        <pointLight position={[10, 10, 10]} /> */}
+        <ambientLight intensity={0.25} />
+        {/* <pointLight position={[10, 10, 10]} /> */}
+
+        <Bulb position={[0, 3, 0]} />
       </Canvas>
     </div>
   )
